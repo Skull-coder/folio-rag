@@ -1,0 +1,6 @@
+{
+  "name": "Folio RAG",
+  "description": "Self-hosted AI document assistant for conversing with your PDF library using local Ollama models, ChromaDB, and MongoDB.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

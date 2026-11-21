@@ -1,0 +1,206 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #ffffff;
+  --foreground: #111111;
+  --card: #fafafa;
+  --card-foreground: #111111;
+  --popover: #ffffff;
+  --popover-foreground: #111111;
+  --primary: #111111;
+  --primary-foreground: #ffffff;
+  --secondary: #f3f3f1;
+  --secondary-foreground: #111111;
+  --muted: #f4f4f2;
+  --muted-foreground: #666664;
+  --accent: #fef9c3;
+  --accent-foreground: #111111;
+  --highlight: #fef08a;
+  --highlight-border: #eab308;
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --border: #e5e5e2;
+  --input: #e5e5e2;
+  --ring: #eab308;
+  --sidebar: #f7f7f5;
+  --radius: 0.625rem;
+}
+
+.dark {
+  --background: #0a0a0a;
+  --foreground: #f5f5f5;
+  --card: #121212;
+  --card-foreground: #f5f5f5;
+  --popover: #161616;
+  --popover-foreground: #f5f5f5;
+  --primary: #ffffff;
+  --primary-foreground: #0a0a0a;
+  --secondary: #1c1c1c;
+  --secondary-foreground: #f5f5f5;
+  --muted: #1a1a1a;
+  --muted-foreground: #a3a3a3;
+  --accent: #242424;
+  --accent-foreground: #f5f5f5;
+  --highlight: #262626;
+  --highlight-border: #525252;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #262626;
+  --input: #262626;
+  --ring: #d4d4d4;
+  --sidebar: #111111;
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3,
+  .font-display {
+    font-family: 'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif;
+  }
+
+  code,
+  pre,
+  .font-mono {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+  }
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Custom subtle scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(128, 128, 128, 0.25);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(128, 128, 128, 0.45);
+}
+
+/* Prose styling for markdown chat responses */
+.prose-folio {
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  color: var(--foreground);
+}
+.prose-folio p {
+  margin-top: 0.65em;
+  margin-bottom: 0.65em;
+}
+.prose-folio p:first-child {
+  margin-top: 0;
+}
+.prose-folio p:last-child {
+  margin-bottom: 0;
+}
+.prose-folio h1,
+.prose-folio h2,
+.prose-folio h3 {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-weight: 600;
+  margin-top: 1.15em;
+  margin-bottom: 0.4em;
+  line-height: 1.3;
+}
+.prose-folio h1 {
+  font-size: 1.25rem;
+}
+.prose-folio h2 {
+  font-size: 1.125rem;
+}
+.prose-folio h3 {
+  font-size: 1rem;
+}
+.prose-folio ul,
+.prose-folio ol {
+  margin-top: 0.5em;
+  margin-bottom: 0.75em;
+  padding-left: 1.4em;
+}
+.prose-folio ul {
+  list-style-type: disc;
+}
+.prose-folio ol {
+  list-style-type: decimal;
+}
+.prose-folio li {
+  margin-top: 0.25em;
+  margin-bottom: 0.25em;
+}
+.prose-folio code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.825em;
+  padding: 0.15em 0.35em;
+  border-radius: 0.25rem;
+  background-color: var(--muted);
+  border: 1px solid var(--border);
+}
+.prose-folio pre {
+  margin-top: 0.75em;
+  margin-bottom: 0.75em;
+  padding: 0.875rem 1rem;
+  border-radius: 0.5rem;
+  background-color: var(--muted);
+  border: 1px solid var(--border);
+  overflow-x: auto;
+}
+.prose-folio pre code {
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: 0.8125rem;
+}
+.prose-folio table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.75em;
+  margin-bottom: 0.75em;
+  font-size: 0.875rem;
+}
+.prose-folio th,
+.prose-folio td {
+  border: 1px solid var(--border);
+  padding: 0.45rem 0.75rem;
+  text-align: left;
+}
+.prose-folio th {
+  background-color: var(--muted);
+  font-weight: 600;
+}
+.prose-folio blockquote {
+  margin: 0.75em 0;
+  padding: 0.5rem 0.875rem;
+  border-radius: 0.375rem;
+  background-color: var(--muted);
+  border: 1px solid var(--border);
+  color: var(--muted-foreground);
+}
