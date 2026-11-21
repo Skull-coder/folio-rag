@@ -30,6 +30,7 @@ interface NewChatScreenProps {
     numCtx?: number;
   }) => void;
   isCreating: boolean;
+  onOpenRuntime?: () => void;
 }
 
 const STARTER_PROMPTS = [
@@ -38,7 +39,11 @@ const STARTER_PROMPTS = [
   'Compare key findings and differences across the selected documents.',
 ];
 
-export function NewChatScreen({ onStartChat, isCreating }: NewChatScreenProps) {
+export function NewChatScreen({
+  onStartChat,
+  isCreating,
+  onOpenRuntime,
+}: NewChatScreenProps) {
   const { data: documents = [], isLoading } = useDocumentsQuery();
   const { data: modelsData } = useModelsQuery();
 
@@ -316,6 +321,7 @@ export function NewChatScreen({ onStartChat, isCreating }: NewChatScreenProps) {
                   setSelectedModel(model);
                   setSelectedNumCtx(numCtx);
                 }}
+                onOpenRuntime={onOpenRuntime}
               />
               <span className="text-xs text-[var(--muted-foreground)] tabular-nums">
                 {selectedIds.length === 0 ? (

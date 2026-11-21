@@ -2,6 +2,7 @@ import {
   ChatMessageRecord,
   CitationSource,
   ContextUsageSummary,
+  ModelProvider,
   PdfDocumentRecord,
 } from '../types.ts';
 import { OllamaChatMessage } from './ollama.ts';
@@ -34,10 +35,16 @@ export function buildContextualizedRetrievalQuery(
 }
 
 /**
- * Determines how many chunks to retrieve based on the selected model's context window
+ * Scales retrieved chunk count based on the active model's context window
  * and number of attached documents.
  */
 export function computeTopKForContext(numCtx: number, docCount: number): number {
+  if (numCtx >= 128000) {
+    return Math.min(28, Math.max(16, docCount * 6));
+  }
+  if (numCtx >= 65536) {
+    return Math.min(20, Math.max(12, docCount * 5));
+  }
   if (numCtx >= 32768) {
     return Math.min(16, Math.max(10, docCount * 4));
   }
@@ -49,6 +56,7 @@ export function computeTopKForContext(numCtx: number, docCount: number): number 
 
 export function buildContextWindow(params: {
   model: string;
+  provider: ModelProvider;
   numCtx: number;
   selectedDocs: PdfDocumentRecord[];
   priorMessages: ChatMessageRecord[];
@@ -56,11 +64,14 @@ export function buildContextWindow(params: {
   currentPrompt: string;
 }): {
   messages: OllamaChatMessage[];
+  systemPrompt: string;
+  historyMessages: OllamaChatMessage[];
   usedSources: CitationSource[];
   contextUsage: ContextUsageSummary;
 } {
   const {
     model,
+    provider,
     numCtx,
     selectedDocs,
     priorMessages,
@@ -69,13 +80,11 @@ export function buildContextWindow(params: {
   } = params;
 
   // Reserve space for the model's generated answer
-  const outputReserve = Math.min(3072, Math.max(1024, Math.floor(numCtx * 0.22)));
+  const outputReserve = Math.min(8192, Math.max(1024, Math.floor(numCtx * 0.2)));
   const promptBudget = Math.max(2048, numCtx - outputReserve);
 
   const currentUserTokens = estimateTokens(currentPrompt);
 
-  // Build explicit inventory of currently selected PDFs so the AI always knows
-  // which files are in scope (even if a document is still indexing or didn't match topK)
   const docInventoryLines = selectedDocs.map((doc) => {
     const statusText =
       doc.status === 'indexed'
@@ -99,8 +108,6 @@ export function buildContextWindow(params: {
 
   const baseInstructionTokens = estimateTokens(baseInstructions);
 
-  // Allocate up to 55% of remaining budget to retrieved PDF excerpts,
-  // preserving the rest for full multi-turn conversation history.
   const availableAfterBase = Math.max(
     1024,
     promptBudget - baseInstructionTokens - currentUserTokens
@@ -131,7 +138,6 @@ export function buildContextWindow(params: {
   const systemPrompt = `${baseInstructions}\n\nRETRIEVED DOCUMENT EXCERPTS:\n${contextSection}`;
   const systemTokens = estimateTokens(systemPrompt);
 
-  // Pack as many previous conversation turns as fit in the remaining context window
   const historyBudget = Math.max(
     0,
     promptBudget - systemTokens - currentUserTokens - 64
@@ -142,7 +148,6 @@ export function buildContextWindow(params: {
 
   for (let i = priorMessages.length - 1; i >= 0; i--) {
     const msg = priorMessages[i];
-    // Include which PDFs were attached when prior turns were asked if helpful
     const content = msg.content.trim();
     if (!content) continue;
     const msgTokens = estimateTokens(content);
@@ -173,9 +178,12 @@ export function buildContextWindow(params: {
 
   return {
     messages,
+    systemPrompt: finalSystemPrompt,
+    historyMessages: includedHistory,
     usedSources,
     contextUsage: {
       model,
+      provider,
       numCtx,
       historyMessagesIncluded: includedHistory.length,
       totalMessagesInChat: priorMessages.length,

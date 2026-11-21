@@ -8,14 +8,16 @@ export const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger;
 export function DropdownMenuContent({
   className,
   sideOffset = 6,
+  collisionPadding = 12,
   ...props
 }: React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content>) {
   return (
     <DropdownMenuPrimitive.Portal>
       <DropdownMenuPrimitive.Content
         sideOffset={sideOffset}
+        collisionPadding={collisionPadding}
         className={cn(
-          'z-50 min-w-[10rem] overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--popover)] p-1 text-[var(--popover-foreground)] shadow-lg',
+          'z-50 min-w-[10rem] rounded-lg border border-[var(--border)] bg-[var(--popover)] p-1 text-[var(--popover-foreground)] shadow-lg',
           className
         )}
         {...props}

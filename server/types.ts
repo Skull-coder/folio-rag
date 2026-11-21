@@ -7,7 +7,9 @@ export type DocumentStatus =
   | 'indexed'
   | 'failed';
 
-export interface PdfDocumentRecord {
+export type ModelProvider = 'ollama' | 'gemini' | 'openai' | 'deepseek' | 'anthropic';
+
+export interface PdfDocument {
   id: string;
   filename: string;
   storedFilename: string;
@@ -22,7 +24,7 @@ export interface PdfDocumentRecord {
   updatedAt: string;
 }
 
-export interface DocumentChunkRecord {
+export interface DocumentChunk {
   id: string;
   documentId: string;
   filename: string;
@@ -31,7 +33,7 @@ export interface DocumentChunkRecord {
   text: string;
 }
 
-export interface IngestionJobRecord {
+export interface IngestionJob {
   id: string;
   documentId: string;
   filename: string;
@@ -55,6 +57,7 @@ export interface CitationSource {
 
 export interface ContextUsageSummary {
   model: string;
+  provider: ModelProvider;
   numCtx: number;
   historyMessagesIncluded: number;
   totalMessagesInChat: number;
@@ -63,7 +66,7 @@ export interface ContextUsageSummary {
   estimatedPromptTokens: number;
 }
 
-export interface ChatMessageRecord {
+export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
@@ -74,24 +77,55 @@ export interface ChatMessageRecord {
   createdAt: string;
 }
 
-export interface ChatThreadRecord {
+export interface ChatSummary {
   id: string;
   title: string;
   documentIds: string[];
   model?: string;
   numCtx?: number;
-  messages: ChatMessageRecord[];
+  messageCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChatThread {
+  id: string;
+  title: string;
+  documentIds: string[];
+  model?: string;
+  numCtx?: number;
+  messages: ChatMessage[];
   createdAt: string;
   updatedAt: string;
 }
 
 export interface OllamaModelInfo {
   name: string;
+  label?: string;
+  provider: ModelProvider;
+  available: boolean;
   sizeBytes: number;
   parameterSize?: string;
   family?: string;
   maxContextLength: number;
   defaultNumCtx: number;
+}
+
+export interface ProviderStatusMap {
+  ollama: boolean;
+  gemini: boolean;
+  openai: boolean;
+  deepseek: boolean;
+  anthropic: boolean;
+}
+
+export type ProviderKeySource = 'dotenv' | 'environment' | 'unset';
+
+export interface ProviderSourceMap {
+  gemini: ProviderKeySource;
+  openai: ProviderKeySource;
+  deepseek: ProviderKeySource;
+  anthropic: ProviderKeySource;
 }
 
 export interface RuntimeHealth {
@@ -118,4 +152,6 @@ export interface RuntimeHealth {
     availableModels: string[];
     error?: string;
   };
+  providers: ProviderStatusMap;
+  providerSources?: ProviderSourceMap;
 }

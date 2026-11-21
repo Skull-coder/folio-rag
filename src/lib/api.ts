@@ -8,6 +8,7 @@ import {
   IngestionJob,
   OllamaModelInfo,
   PdfDocument,
+  ProviderStatusMap,
   RuntimeHealth,
 } from './types';
 
@@ -24,9 +25,12 @@ export const api = {
   getHealth: () => apiJson<RuntimeHealth>('/api/health'),
 
   listModels: () =>
-    apiJson<{ connected: boolean; defaultModel: string; models: OllamaModelInfo[] }>(
-      '/api/models'
-    ),
+    apiJson<{
+      connected: boolean;
+      defaultModel: string;
+      providers: ProviderStatusMap;
+      models: OllamaModelInfo[];
+    }>('/api/models'),
 
   listDocuments: () =>
     apiJson<{ documents: PdfDocument[] }>('/api/documents').then((d) => d.documents),

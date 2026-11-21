@@ -8,12 +8,20 @@ import {
   buildContextWindow,
   computeTopKForContext,
 } from './services/contextBuilder.ts';
+import { reloadLocalEnv } from './services/envLoader.ts';
 import {
   ingestionQueue,
   resolveUploadPath,
   UPLOADS_DIR,
 } from './services/ingestionQueue.ts';
 import { ollamaService } from './services/ollama.ts';
+import {
+  getAllProviderStatus,
+  getCloudProviderSources,
+  getUnifiedModelCatalog,
+  resolveModelRuntime,
+  streamUnifiedModelChat,
+} from './services/providers.ts';
 import { dataStore } from './services/store.ts';
 import { ChatMessageRecord, ChatThreadRecord, PdfDocumentRecord } from './types.ts';
 
@@ -34,7 +42,7 @@ function sanitizeModelName(value: unknown): string | undefined {
 function sanitizeNumCtx(value: unknown): number | undefined {
   if (typeof value !== 'number' || !Number.isFinite(value)) return undefined;
   const rounded = Math.round(value);
-  if (rounded < 2048 || rounded > 262144) return undefined;
+  if (rounded < 2048 || rounded > 1048576) return undefined;
   return rounded;
 }
 
@@ -95,12 +103,15 @@ export function createApiRouter() {
   // Health & Runtime Connectivity
   router.get('/health', async (_req: Request, res: Response) => {
     try {
-      const [mongodb, chromadb, ollama] = await Promise.all([
+      reloadLocalEnv();
+      const [mongodb, chromadb, ollama, providers] = await Promise.all([
         dataStore.getStatus(),
         chromaStore.getStatus(),
         ollamaService.getStatus(),
+        getAllProviderStatus(),
       ]);
-      res.json({ mongodb, chromadb, ollama });
+      const providerSources = getCloudProviderSources();
+      res.json({ mongodb, chromadb, ollama, providers, providerSources });
     } catch (err) {
       res.status(500).json({
         error: err instanceof Error ? err.message : 'Health check failed',
@@ -108,10 +119,11 @@ export function createApiRouter() {
     }
   });
 
-  // Installed Ollama Chat Models & Context Lengths
+  // Installed Ollama + Cloud Provider Models & Context Lengths
   router.get('/models', async (_req: Request, res: Response) => {
     try {
-      const catalog = await ollamaService.listChatModels();
+      reloadLocalEnv();
+      const catalog = await getUnifiedModelCatalog();
       res.json(catalog);
     } catch (err) {
       res.status(500).json({
@@ -444,6 +456,7 @@ export function createApiRouter() {
 
   // Send Message & Stream RAG Answer via SSE
   router.post('/chats/:id/messages', async (req: Request, res: Response) => {
+    reloadLocalEnv();
     const chatId = req.params.id;
     if (!isValidId(chatId)) {
       res.status(400).json({ error: 'Invalid chat ID' });
@@ -556,13 +569,12 @@ export function createApiRouter() {
     });
 
     try {
-      // 1. Resolve selected model's actual context window
-      const specs = await ollamaService.getModelSpecs(activeModel);
-      const defaultCtx = Math.max(4096, Math.min(specs.maxContextLength, 32768));
-      const desiredCtx = requestedNumCtx || chat.numCtx || defaultCtx;
+      // 1. Resolve selected model's provider and actual context window
+      const runtime = await resolveModelRuntime(activeModel);
+      const desiredCtx = requestedNumCtx || chat.numCtx || runtime.defaultNumCtx;
       const effectiveNumCtx = Math.max(
         4096,
-        Math.min(desiredCtx, specs.maxContextLength)
+        Math.min(desiredCtx, runtime.maxContextLength)
       );
 
       // 2. Contextualize retrieval query with recent conversation turns so follow-ups hit the right PDF sections
@@ -581,8 +593,15 @@ export function createApiRouter() {
       );
 
       // 4. Budget conversation history + selected PDF inventory + retrieved chunks to fit numCtx
-      const { messages, usedSources, contextUsage } = buildContextWindow({
+      const {
+        messages,
+        systemPrompt,
+        historyMessages,
+        usedSources,
+        contextUsage,
+      } = buildContextWindow({
         model: activeModel,
+        provider: runtime.provider,
         numCtx: effectiveNumCtx,
         selectedDocs,
         priorMessages,
@@ -596,9 +615,15 @@ export function createApiRouter() {
       let fullContent = '';
       let fullThinking = '';
 
-      await ollamaService.streamChat(
-        messages,
-        {
+      await streamUnifiedModelChat({
+        provider: runtime.provider,
+        model: activeModel,
+        numCtx: effectiveNumCtx,
+        systemPrompt,
+        historyMessages,
+        allMessages: messages,
+        currentPrompt: rawContent,
+        handlers: {
           onThinking: (chunk) => {
             fullThinking += chunk;
             sendEvent('thinking', { text: chunk });
@@ -608,12 +633,8 @@ export function createApiRouter() {
             sendEvent('token', { text: chunk });
           },
         },
-        {
-          model: activeModel,
-          numCtx: effectiveNumCtx,
-          signal: abortController.signal,
-        }
-      );
+        signal: abortController.signal,
+      });
 
       const assistantMessage: ChatMessageRecord = {
         id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,

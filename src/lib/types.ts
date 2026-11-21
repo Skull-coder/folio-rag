@@ -7,6 +7,8 @@ export type DocumentStatus =
   | 'indexed'
   | 'failed';
 
+export type ModelProvider = 'ollama' | 'gemini' | 'openai' | 'deepseek' | 'anthropic';
+
 export interface PdfDocument {
   id: string;
   filename: string;
@@ -55,6 +57,7 @@ export interface CitationSource {
 
 export interface ContextUsageSummary {
   model: string;
+  provider: ModelProvider;
   numCtx: number;
   historyMessagesIncluded: number;
   totalMessagesInChat: number;
@@ -98,11 +101,22 @@ export interface ChatThread {
 
 export interface OllamaModelInfo {
   name: string;
+  label?: string;
+  provider: ModelProvider;
+  available: boolean;
   sizeBytes: number;
   parameterSize?: string;
   family?: string;
   maxContextLength: number;
   defaultNumCtx: number;
+}
+
+export interface ProviderStatusMap {
+  ollama: boolean;
+  gemini: boolean;
+  openai: boolean;
+  deepseek: boolean;
+  anthropic: boolean;
 }
 
 export interface RuntimeHealth {
@@ -129,4 +143,5 @@ export interface RuntimeHealth {
     availableModels: string[];
     error?: string;
   };
+  providers: ProviderStatusMap;
 }

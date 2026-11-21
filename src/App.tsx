@@ -125,11 +125,13 @@ function WorkspaceShell() {
               setPendingInitialPrompt(null);
               setActiveChatId(null);
             }}
+            onOpenRuntime={() => setRuntimeOpen(true)}
           />
         ) : (
           <NewChatScreen
             onStartChat={handleStartChat}
             isCreating={createChat.isPending}
+            onOpenRuntime={() => setRuntimeOpen(true)}
           />
         )}
       </main>

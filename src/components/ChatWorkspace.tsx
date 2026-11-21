@@ -40,6 +40,7 @@ interface ChatWorkspaceProps {
   onConsumeInitialPrompt: () => void;
   onOpenMobileSidebar: () => void;
   onNewChat: () => void;
+  onOpenRuntime?: () => void;
 }
 
 function SourcesPanel({ sources }: { sources: CitationSource[] }) {
@@ -145,6 +146,7 @@ export function ChatWorkspace({
   onConsumeInitialPrompt,
   onOpenMobileSidebar,
   onNewChat,
+  onOpenRuntime,
 }: ChatWorkspaceProps) {
   const qc = useQueryClient();
   const { data: chat, isLoading: chatLoading } = useChatDetailQuery(chatId);
@@ -562,6 +564,7 @@ export function ChatWorkspace({
                     patch: { model, numCtx },
                   })
                 }
+                onOpenRuntime={onOpenRuntime}
               />
             </div>
 

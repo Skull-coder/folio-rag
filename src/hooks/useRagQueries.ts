@@ -24,7 +24,8 @@ export function useModelsQuery() {
   return useQuery({
     queryKey: ['models'],
     queryFn: api.listModels,
-    staleTime: 30_000,
+    staleTime: 5_000,
+    refetchOnWindowFocus: true,
   });
 }
 

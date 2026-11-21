@@ -109,6 +109,19 @@ Open **http://localhost:3000** in your browser.
 
 ---
 
+## Optional Cloud Models (Gemini, ChatGPT, DeepSeek, Claude)
+
+By default, Folio RAG runs 100% locally with Ollama (`qwen3:4b` + `nomic-embed-text`). If you want faster cloud inference or larger context windows (up to 1M tokens), set any of these variables in your `.env` file and restart the server—those models will automatically unlock in the chat model dropdown with scaled context windows:
+
+```env
+GEMINI_API_KEY=your_google_gemini_key       # Enables Gemini 4 Flash & Flash Lite (1M ctx)
+OPENAI_API_KEY=your_openai_chatgpt_key      # Enables GPT-4o, GPT-4o mini & o3-mini (128K-200K ctx)
+DEEPSEEK_API_KEY=your_deepseek_key         # Enables DeepSeek V3 Chat & R1 Reasoner (64K ctx)
+ANTHROPIC_API_KEY=your_anthropic_key       # Enables Claude Sonnet 4.5 & Haiku 4.5 (200K ctx)
+```
+
+---
+
 ## Stopping Services
 
 ```bash
